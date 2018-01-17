@@ -1,9 +1,12 @@
 import React, { Component } from "react";
-import Burger from "../../components/Burger/Burger";
-import BuildControls from "../../components/Burger/BuildControls/BuildControls";
-import OrderSummary from "../../components/Burger/OrderSummary/OrderSummary";
-import Modal from "../../components/UI/Modal/Modal";
-import Aux from "../../hoc/Aux";
+import Burger from "components/Burger/Burger";
+import BuildControls from "components/Burger/BuildControls/BuildControls";
+import OrderSummary from "components/Burger/OrderSummary/OrderSummary";
+import Modal from "components/UI/Modal/Modal";
+import Aux from "hoc/Aux/Aux";
+import Spinner from "../../components/UI/Spinner/Spinner";
+import axios from "../../axios-orders";
+import withNetworkErrorHandler from "../../hoc/withNetworkErrorHandler/withNetworkErrorHandler";
 
 const INGREDIENT_PRICES = {
   salad: 0.5,
@@ -22,7 +25,8 @@ class BurgerBuilder extends Component {
     },
     totalPrice: 4,
     purchasable: false,
-    purchasing: false
+    purchasing: false,
+    isLoading: false
   };
 
   updatePurchaseState(ingredients) {
@@ -79,24 +83,54 @@ class BurgerBuilder extends Component {
   };
 
   handleOrderContinue = () => {
-    return null;
+    this.setState({ isLoading: true });
+    const order = {
+      ingredients: this.state.ingredients,
+      price: this.state.totalPrice,
+      customer: {
+        name: "Nick Klunder",
+        address: {
+          street: "Some Street 123",
+          zipCode: 98105,
+          country: "United States"
+        },
+        email: "test@test.com"
+      },
+      deliveryMethod: "fastest"
+    };
+
+    axios
+      .post("/orders.json", order)
+      .then(res => {
+        this.setState({ isLoading: false, purchasing: false });
+      })
+      .catch(err => {
+        this.setState({ isLoading: false, purchasing: false });
+      });
   };
 
   render() {
+    console.log(this.props)
     const disabled = Object.keys(this.state.ingredients).reduce((obj, key) => {
       obj[key] = this.state.ingredients[key] < 1;
       return obj;
     }, {});
+    let orderSummary = (
+      <OrderSummary
+        ingredients={this.state.ingredients}
+        totalPrice={this.state.totalPrice}
+        onCancel={this.handleOrderDismiss}
+        onContinue={this.handleOrderContinue}
+      />
+    );
 
+    if (this.state.isLoading) {
+      orderSummary = <Spinner />;
+    }
     return (
       <Aux>
         <Modal show={this.state.purchasing} onDismiss={this.handleOrderDismiss}>
-          <OrderSummary
-            ingredients={this.state.ingredients}
-            totalPrice={this.state.totalPrice}
-            onCancel={this.handleOrderDismiss}
-            onContinue={this.handleOrderContinue}
-          />
+          {orderSummary}
         </Modal>
         <Burger ingredients={this.state.ingredients} />
         <BuildControls
@@ -113,4 +147,4 @@ class BurgerBuilder extends Component {
   }
 }
 
-export default BurgerBuilder;
+export default withNetworkErrorHandler(BurgerBuilder);

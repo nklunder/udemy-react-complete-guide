@@ -1,6 +1,6 @@
 import React from "react";
-import Aux from "../../../hoc/Aux";
-import Button from "../../UI/Button/Button";
+import Aux from "hoc/Aux/Aux";
+import Button from "components/UI/Button/Button";
 
 const orderSummary = props => {
   const ingredientsList = Object.keys(props.ingredients).map(igKey => {
